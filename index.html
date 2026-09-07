@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Outreach Response Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* ── tokens ───────────────────────────────────────────────────────────────
+   Light is the base set. Both overrides redefine only these, so a colour
+   never lives solely inside a media query. Neutrals carry a slight green
+   bias toward the teal accent, so nothing reads as default grey.        */
+:root{
+  --bg:#F5F7F6; --surface:#FFFFFF; --surface-2:#EDF1EF; --surface-3:#E4EAE7;
+  --ink:#141D1A; --ink-2:#44514C; --ink-3:#6C7B75;
+  --rule:#D9E0DD; --rule-strong:#BCC7C3;
+  --accent:#0F5C56; --accent-soft:#DCEDEA;
+  --pos:#0B8055; --neg:#C6362A; --neu:#2563B0; --warn:#B07D08; --auto:#77857F;
+  --pos-wash:#E2F1EA; --neg-wash:#F8E4E1; --neu-wash:#E3EDF9; --warn-wash:#F6EDDC; --auto-wash:#EAEEEC;
+  --shadow:0 1px 2px rgba(20,29,26,.05), 0 8px 24px -18px rgba(20,29,26,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121716; --surface:#1A201E; --surface-2:#222A27; --surface-3:#2B3430;
+    --ink:#E9EEEB; --ink-2:#AEBBB6; --ink-3:#82908A;
+    --rule:#2C3532; --rule-strong:#3D4844;
+    --accent:#54B5AA; --accent-soft:#1D302E;
+    --pos:#26A47B; --neg:#DC5A4B; --neu:#5293DC; --warn:#B08A16; --auto:#82908A;
+    --pos-wash:#16302A; --neg-wash:#33201E; --neu-wash:#1A2739; --warn-wash:#2C2716; --auto-wash:#242B29;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121716; --surface:#1A201E; --surface-2:#222A27; --surface-3:#2B3430;
+  --ink:#E9EEEB; --ink-2:#AEBBB6; --ink-3:#82908A;
+  --rule:#2C3532; --rule-strong:#3D4844;
+  --accent:#54B5AA; --accent-soft:#1D302E;
+  --pos:#26A47B; --neg:#DC5A4B; --neu:#5293DC; --warn:#B08A16; --auto:#82908A;
+  --pos-wash:#16302A; --neg-wash:#33201E; --neu-wash:#1A2739; --warn-wash:#2C2716; --auto-wash:#242B29;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.55; margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1160px; margin:0 auto; padding:36px 24px 72px;
+  display:flex; flex-direction:column; gap:34px}
+
+h1,h2,h3{font-family:Archivo,"Helvetica Neue",Arial,sans-serif; text-wrap:balance; margin:0}
+.num{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px; letter-spacing:.13em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3); font-family:Archivo,sans-serif}
+
+/* ── masthead ── */
+.mast{display:flex; flex-direction:column; gap:14px;
+  border-bottom:2px solid var(--ink); padding-bottom:20px}
+.mast h1{font-size:clamp(30px,5vw,46px); font-weight:700; letter-spacing:-.022em; line-height:1.02}
+.mast .lede{color:var(--ink-2); max-width:66ch; font-size:16.5px}
+.srcs{display:flex; flex-wrap:wrap; gap:7px}
+.src{font-size:11.5px; font-family:"IBM Plex Mono",monospace; color:var(--ink-2);
+  background:var(--surface-2); border:1px solid var(--rule);
+  padding:3px 9px; border-radius:3px}
+.src b{color:var(--accent); font-weight:600}
+
+/* ── the chain ── */
+.chain{display:grid; grid-template-columns:repeat(6,1fr); gap:0;
+  background:var(--surface); border:1px solid var(--rule); border-radius:5px;
+  box-shadow:var(--shadow); overflow:hidden}
+.step{padding:17px 16px 16px; border-right:1px solid var(--rule);
+  display:flex; flex-direction:column; gap:3px; position:relative}
+.step:last-child{border-right:0}
+.step.key{background:var(--accent-soft)}
+.step .v{font-family:Archivo,sans-serif; font-weight:700; font-size:30px;
+  line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.step .k{font-size:12px; font-weight:600; color:var(--ink-2); line-height:1.25}
+.step .sub{font-size:11.5px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.step.key .v{color:var(--accent)}
+.drop{position:absolute; top:0; left:0; height:3px; background:var(--accent); opacity:.55}
+
+/* ── panels ── */
+/* panels size to their own content — a stretched card leaves dead space under
+   the shorter of the pair, which reads as a missing section */
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr));
+  gap:20px; align-items:start}
+.panel{background:var(--surface); border:1px solid var(--rule); border-radius:5px;
+  box-shadow:var(--shadow); padding:20px 20px 18px;
+  display:flex; flex-direction:column; gap:16px}
+.panel-head{display:flex; flex-direction:column; gap:4px;
+  border-bottom:1px solid var(--rule); padding-bottom:12px}
+.panel-head h2{font-size:19px; font-weight:600; letter-spacing:-.01em}
+.panel-head p{margin:0; font-size:13px; color:var(--ink-3)}
+
+.metric-row{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+.metric-row .lab{font-size:13px; color:var(--ink-2); font-weight:600}
+.metric-row .val{font-size:13px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+
+/* stacked delivery bar: 2px surface gap between segments per mark spec */
+.bar{display:flex; height:26px; border-radius:4px; overflow:hidden;
+  background:var(--surface-2); gap:2px}
+.seg{position:relative; display:flex; align-items:center; justify-content:center;
+  min-width:2px; transition:filter .12s}
+.seg:hover{filter:brightness(1.12)}
+.seg span{font-size:11px; font-weight:600; color:#fff;
+  font-family:"IBM Plex Mono",monospace; padding:0 4px;
+  text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.seg.s-pos{background:var(--pos)} .seg.s-warn{background:var(--warn)}
+.seg.s-neg{background:var(--neg)} .seg.s-neu{background:var(--neu)}
+.seg.s-auto{background:var(--auto)}
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--ink-2)}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:2px;
+  margin-right:5px; vertical-align:-1px}
+.legend .n{font-family:"IBM Plex Mono",monospace; color:var(--ink-3)}
+
+.block{display:flex; flex-direction:column; gap:9px}
+.block > .eyebrow{margin-bottom:-2px}
+
+/* ── tables ── */
+.tbl-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:13.5px}
+th{font-family:Archivo,sans-serif; font-size:11px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--ink-3); font-weight:600;
+  text-align:left; padding:0 10px 7px 0; border-bottom:1px solid var(--rule-strong);
+  white-space:nowrap}
+td{padding:9px 10px 9px 0; border-bottom:1px solid var(--rule); vertical-align:top}
+th.r,td.r{text-align:right; padding-right:0; padding-left:20px}
+td.r,td.mono{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tfoot td{border-top:1px solid var(--rule-strong); border-bottom:0;
+  font-weight:600; padding-top:9px}
+
+/* ── the matrix: the answer to "how many did we reply to" ── */
+.matrix{background:var(--surface); border:1px solid var(--rule); border-radius:5px;
+  box-shadow:var(--shadow); padding:22px}
+.matrix table{font-size:14px}
+.matrix td{padding:11px 10px 11px 0}
+/* long numeric headers ("Human answered") wrap rather than run into each other */
+.matrix th.r{white-space:normal; max-width:82px; line-height:1.25; vertical-align:bottom}
+.matrix th:first-child{min-width:132px}
+.matrix td.r{width:82px}
+.chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+  padding:2px 9px 2px 7px; border-radius:11px; white-space:nowrap;
+  border:1px solid transparent}
+.chip i{width:8px; height:8px; border-radius:50%; flex:none}
+.c-pos{background:var(--pos-wash); color:var(--pos); border-color:var(--pos)}
+.c-pos i{background:var(--pos)}
+.c-neg{background:var(--neg-wash); color:var(--neg); border-color:var(--neg)}
+.c-neg i{background:var(--neg)}
+.c-neu{background:var(--neu-wash); color:var(--neu); border-color:var(--neu)}
+.c-neu i{background:var(--neu)}
+.c-auto{background:var(--auto-wash); color:var(--ink-2); border-color:var(--rule-strong)}
+.c-auto i{background:var(--auto)}
+.cell-hi{color:var(--pos); font-weight:600}
+.cell-miss{color:var(--neg); font-weight:600}
+.cell-zero{color:var(--ink-3)}
+
+/* ── money ── */
+.money{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.money-hero{background:var(--accent-soft); border:1px solid var(--rule);
+  border-radius:4px; padding:14px 15px; display:flex; flex-direction:column; gap:3px}
+.money-hero.alt{background:var(--surface-2)}
+.money-hero .v{font-family:Archivo,sans-serif; font-weight:700; font-size:32px;
+  line-height:1; letter-spacing:-.02em; color:var(--accent); font-variant-numeric:tabular-nums}
+.money-hero.alt .v{color:var(--ink)}
+.money-hero .k{font-size:12.5px; font-weight:600; color:var(--ink-2); line-height:1.3}
+.money-hero .sub{font-size:11.5px; color:var(--ink-3)}
+.claims{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:22px}
+.claim{display:flex; flex-direction:column; gap:6px}
+.claim .v{font-family:Archivo,sans-serif; font-weight:700; font-size:38px; line-height:1;
+  letter-spacing:-.02em; color:var(--accent); font-variant-numeric:tabular-nums}
+.claim .v .unit{font-size:22px; color:var(--ink-3)}
+.claim.warnish .v{color:var(--warn)}
+.claim p{margin:0; font-size:13px; color:var(--ink-2)}
+@media (max-width:520px){.money{grid-template-columns:1fr}}
+
+.wave1{background:var(--surface-2); border:1px solid var(--rule); border-left:3px solid var(--warn);
+  border-radius:4px; padding:11px 13px; display:flex; flex-direction:column; gap:4px}
+.wave1 p{margin:0; font-size:12.5px; color:var(--ink-2)}
+
+/* ── payer detail ── */
+.payers{font-size:12.5px}
+.payers td{padding:11px 12px 11px 0; vertical-align:top}
+.payers th{white-space:nowrap}
+/* dates and the campaign label are single tokens — wrapping them mid-value
+   turns "2026-08-26" into two lines and costs more width than it saves */
+.payers td.mono, .payers td:nth-child(2){white-space:nowrap}
+.paycell{white-space:nowrap; line-height:1.75}
+.paydate{font-family:"IBM Plex Mono",monospace; color:var(--ink-2)}
+.ptype{font-size:10px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+  padding:1px 5px; border-radius:3px; font-family:Archivo,sans-serif}
+.pt-top-up{background:var(--pos-wash); color:var(--pos)}
+.pt-auto-renewal{background:var(--neu-wash); color:var(--neu)}
+.pgap{font-family:"IBM Plex Mono",monospace; color:var(--ink-3); font-size:11px}
+.none{color:var(--ink-3); font-style:italic}
+.payers .chip{font-size:10.5px; padding:1px 7px 1px 6px}
+.payers .why{display:block; margin-top:3px; max-width:30ch}
+
+/* ── ledger ── */
+.filters{display:flex; gap:7px; flex-wrap:wrap; align-items:center}
+.fbtn{font-family:Archivo,sans-serif; font-size:12px; font-weight:600;
+  padding:5px 12px; border-radius:20px; cursor:pointer;
+  border:1px solid var(--rule-strong); background:var(--surface); color:var(--ink-2)}
+.fbtn:hover{border-color:var(--accent); color:var(--accent)}
+.fbtn[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.fbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.quote{color:var(--ink-2); font-style:italic; max-width:46ch}
+.quote .gloss{display:block; font-style:normal; font-size:12px; color:var(--ink-3); margin-top:2px}
+.why{font-size:12px; color:var(--ink-3); max-width:34ch; display:block; margin-top:3px}
+tr.is-auto td{color:var(--ink-3)}
+tr.is-auto .quote{color:var(--ink-3)}
+.who{font-size:12px; font-weight:600; white-space:nowrap}
+.who-human{color:var(--pos)} .who-ai{color:var(--warn)} .who-none{color:var(--neg)}
+.chat-link{font-size:12px; font-weight:600; white-space:nowrap; color:var(--accent);
+  text-decoration:none; border-bottom:1px solid transparent;
+  font-family:Archivo,sans-serif}
+.chat-link:hover{border-bottom-color:var(--accent)}
+.chat-link:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px}
+
+/* ── gaps ── */
+/* 9 cards: 3 or 1 column divides evenly, so no row ends in dead cells */
+.gaps{display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:5px; overflow:hidden}
+@media (max-width:820px){.gaps{grid-template-columns:1fr}}
+.gap{background:var(--surface); padding:16px 17px; display:flex; flex-direction:column; gap:5px}
+.gap h3{font-size:14.5px; font-weight:600; letter-spacing:-.005em}
+.gap p{margin:0; font-size:13px; color:var(--ink-2)}
+.gap .tag{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  font-weight:600; font-family:Archivo,sans-serif}
+.tag-blind{color:var(--neg)} .tag-drift{color:var(--warn)} .tag-ok{color:var(--accent)}
+
+.note{font-size:12.5px; color:var(--ink-3); max-width:78ch}
+.note code{font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+  background:var(--surface-2); padding:1px 5px; border-radius:3px; color:var(--ink-2)}
+h2.sec{font-size:22px; font-weight:600; letter-spacing:-.015em}
+.sec-head{display:flex; flex-direction:column; gap:5px; margin-bottom:-8px}
+.sec-head p{margin:0; color:var(--ink-2); max-width:70ch; font-size:14.5px}
+
+@media (max-width:820px){
+  .chain{grid-template-columns:repeat(2,1fr)}
+  .step{border-bottom:1px solid var(--rule)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style><style>
+/* shell states — the page is empty until the key unlocks it */
+.gate{max-width:420px; margin:14vh auto; display:flex; flex-direction:column; gap:14px;
+  background:var(--surface); border:1px solid var(--rule); border-radius:5px;
+  padding:26px; box-shadow:var(--shadow)}
+.gate h1{font-size:22px; font-weight:600; letter-spacing:-.01em}
+.gate p{margin:0; font-size:14px; color:var(--ink-2)}
+.gate input{font-family:"IBM Plex Mono",monospace; font-size:14px; padding:9px 11px;
+  border:1px solid var(--rule-strong); border-radius:4px; background:var(--bg); color:var(--ink)}
+.gate input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.gate button{font-family:Archivo,sans-serif; font-weight:600; font-size:14px; padding:9px 16px;
+  border:0; border-radius:4px; background:var(--accent); color:var(--bg); cursor:pointer}
+.gate .err{color:var(--neg); font-size:13px}
+.stamp{font-size:11.5px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.review{background:var(--warn-wash); color:var(--warn); border:1px solid var(--warn);
+  font-size:10.5px; font-weight:600; padding:1px 6px; border-radius:9px; white-space:nowrap;
+  font-family:Archivo,sans-serif}
+</style>
+</head>
+<body>
+<div id="root"><div class="gate" id="gate">
+  <h1>Outreach Response Ledger</h1>
+  <p>This report carries customer names, phone numbers and revenue, so it needs the dashboard key.</p>
+  <input id="key" type="password" placeholder="dashboard key" autocomplete="current-password">
+  <button id="go">Open the report</button>
+  <p class="err" id="err" hidden></p>
+  <p class="stamp">Tip: append <code>?key=…</code> to the URL to skip this.<br>The report is stored encrypted; the key is what decrypts it, in your browser.</p>
+</div></div>
+
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const n = (x) => Number(x || 0).toLocaleString('en-US');
+const money = (x) => '$' + (x % 1 ? x.toFixed(2) : Math.round(x).toLocaleString('en-US'));
+const pct = (a, b) => b ? (a / b * 100).toFixed(1) + '%' : '—';
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pretty = (iso) => { if (!iso) return '—'; const d = new Date(iso + 'T00:00:00Z');
+  return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+
+const CHIP = { positive:['c-pos','Positive'], negative:['c-neg','Negative'], neutral:['c-neu','Neutral'],
+  auto:['c-auto','Auto-reply'], unreviewed:['c-auto','Unreviewed'] };
+const WHO = { human:['who-human','Human teammate'], ai:['who-ai','AI bot only'], none:['who-none','Nobody'] };
+const STAT = { 'first-ever':['c-pos','First-ever payment'], returned:['c-neu','Returned'],
+  'already-active':['c-auto','Already active'] };
+
+let DATA = null, FILTER = 'all';
+
+// ── sections ──────────────────────────────────────────────────────────────
+function masthead(d) {
+  const spans = [d.campaigns.churn.wa.from, d.campaigns.onboarding.wa.from,
+    d.campaigns.churn.email.from, d.campaigns.onboarding.email.from, d.wave1 && d.wave1.from]
+    .filter(Boolean).sort();
+  return `<header class="mast">
+    <div class="eyebrow">Churn win-back &amp; onboarding activation · all time, ${pretty(spans[0])} – today</div>
+    <h1>Outreach Response Ledger</h1>
+    <p class="lede">Every email and WhatsApp message flow the two campaigns have ever fired, what
+      Meta actually did with it, who answered back, whether that answer was warm or cold, whether
+      a human on our side ever replied — and who went on to pay.</p>
+    <div class="srcs">
+      <span class="src">Lark · <b>Churn Analysis</b> + <b>Onboarding CRM</b></span>
+      <span class="src">Postmark · <b>2 streams</b></span>
+      <span class="src">ChatDaddy · <b>flow records + inbox</b></span>
+      <span class="src">payments2 · <b>credit_gain</b></span>
+      <span class="src">rebuilt <b>${esc(d.generatedAt.slice(0, 16).replace('T', ' '))} UTC</b></span>
+    </div>
+  </header>`;
+}
+
+function chain(d) {
+  const c = d.campaigns.churn, o = d.campaigns.onboarding;
+  const w1 = d.wave1 ? d.wave1.emails : 0;
+  const msgs = c.email.sent + o.email.sent + w1 + c.wa.msgs + o.wa.msgs;
+  const people = c.wa.people + o.wa.people;
+  const delivered = c.wa.delivered + o.wa.delivered;
+  const failed = c.wa.failed + o.wa.failed, queued = c.wa.queued + o.wa.queued;
+  const replied = c.wa.replied + o.wa.replied;
+  const S = (k) => ['positive','negative','neutral','unreviewed']
+    .reduce((a, s) => a + c.sentiment[s][k] + o.sentiment[s][k], 0);
+  const real = S('total'), human = S('human');
+  const step = (v, k, sub, key, w) => `<div class="step${key ? ' key' : ''}">
+    <div class="drop" style="width:${w}%"></div>
+    <div class="v num">${v}</div><div class="k">${k}</div><div class="sub">${sub}</div></div>`;
+  return `<section><div class="chain">
+    ${step(n(msgs), 'Messages sent', `${n(c.email.sent + o.email.sent + w1)} email · ${n(c.wa.msgs + o.wa.msgs)} WhatsApp`, 0, 100)}
+    ${step(n(people), 'People on WhatsApp', `across ${d.campaigns.churn.flows.length + d.campaigns.onboarding.flows.length} flows`, 0, 100)}
+    ${step(n(delivered), 'Reached a handset', `${pct(delivered, people)} · ${failed} failed, ${queued} queued`, 0, delivered / people * 100)}
+    ${step(n(replied), 'Replied', `${pct(replied, delivered)} of delivered`, 1, 13)}
+    ${step(n(real), 'Were a real person', `${replied - real} were auto-responders`, 1, 6)}
+    ${step(n(human), 'A human answered', `of ${real} · ${real - human} got only the bot`, 1, 2)}
+  </div>
+  <p class="note" style="margin-top:10px">Two things narrow what the rest of the page can measure.
+    <strong>No email reply is measurable</strong> — Postmark's inbound stream holds zero records and
+    replies land in <code>hello@chatdaddy.tech</code>, which neither board reads.${d.wave1 ? `
+    And the onboarding drip's <strong>first wave (${pretty(d.wave1.from)} – ${pretty(d.wave1.to)},
+    ${n(d.wave1.emails)} emails to ${n(d.wave1.recipients)} people) went out through the Gmail API</strong>,
+    not Postmark, so it has no delivery, open or bounce data at all.` : ''}
+    Everything from "reached a handset" rightwards is WhatsApp only.</p></section>`;
+}
+
+function campaignPanel(d, k, title, blurb) {
+  const c = d.campaigns[k], e = c.email, w = c.wa;
+  const seg = (cls, v, tot, label) => v ? `<div class="seg ${cls}" style="width:${v / tot * 100}%"
+    title="${label}"><span>${v >= tot * 0.12 ? label : v}</span></div>` : '';
+  const rows = c.flows.map((f) => `<tr><td>${esc(f.name.replace('WA Activation · ', '').replace('Curn · ', ''))}
+      <span class="why">${esc(f.list)}</span></td>
+    <td class="r">${n(f.msgs)}</td><td class="r">${n(f.people)}</td><td class="r">${n(f.delivered)}</td>
+    <td class="r">${n(f.failed)}</td><td class="r">${n(f.queued)}</td></tr>`).join('');
+  const noOpen = e.recipients - e.openers;
+  return `<section class="panel">
+    <div class="panel-head"><h2>${title}</h2><p>${blurb}</p></div>
+    <div class="block">
+      <div class="eyebrow">Email — ${esc(e.stream)} (from ${pretty(e.from)})</div>
+      <div class="metric-row"><span class="lab">${n(e.sent)} sent to ${n(e.recipients)} people</span>
+        <span class="val">${n(e.bounces)} bounced</span></div>
+      <div class="bar">
+        ${seg('s-neu', e.openers, e.recipients, e.openers + ' opened')}
+        ${seg('s-pos', e.clickers, e.recipients, e.clickers + ' clicked')}
+        ${seg('s-auto', noOpen, e.recipients, noOpen + ' silent')}
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--neu)"></i>Opened <span class="n">${n(e.openers)} people / ${n(e.openEvents)} opens</span></span>
+        <span><i style="background:var(--pos)"></i>Clicked <span class="n">${n(e.clickers)}</span></span>
+        <span><i style="background:var(--auto)"></i>No open <span class="n">${n(noOpen)}</span></span>
+      </div>
+    </div>
+    <div class="block">
+      <div class="eyebrow">WhatsApp — ${n(w.msgs)} flow messages to ${n(w.people)} people</div>
+      <div class="metric-row"><span class="lab">Meta delivery, per person</span>
+        <span class="val">${w.replied} replied · ${pct(w.replied, w.delivered)} of delivered</span></div>
+      <div class="bar">
+        ${seg('s-pos', w.delivered, w.people, w.delivered + ' delivered')}
+        ${seg('s-neg', w.failed, w.people, String(w.failed))}
+        ${seg('s-warn', w.queued, w.people, w.queued + ' queued')}
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--pos)"></i>Delivered <span class="n">${n(w.delivered)}</span></span>
+        <span><i style="background:var(--neg)"></i>Failed <span class="n">${n(w.failed)}</span></span>
+        <span><i style="background:var(--warn)"></i>Queued <span class="n">${n(w.queued)}</span></span>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Message flow</th><th class="r">Msgs</th><th class="r">People</th>
+        <th class="r">Delivered</th><th class="r">Failed</th><th class="r">Queued</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </section>`;
+}
+
+function payers(d) {
+  const ext = d.payers.filter((p) => !p.internal);
+  const by = (s) => ext.filter((p) => p.status === s);
+  const sum = (a) => Math.round(a.reduce((x, p) => x + p.total, 0) * 100) / 100;
+  const CAMP = { churn: 'Churn win-back', onboarding: 'Activation w2', 'onboarding-w1': 'Activation w1' };
+  const rows = d.payers.map((p) => {
+    let cls, lab;
+    if (p.internal) { cls = 'c-neg'; lab = 'Excluded — our own team'; }
+    else { [cls, lab] = STAT[p.status]; if (p.status === 'returned') lab = `Returned after ${p.gapDays} days`; }
+    const pays = p.payments.map((x) => `<span class="paydate">${x.date}</span>
+      <span class="ptype pt-${x.type === 'auto_renewal' ? 'auto-renewal' : 'top-up'}">${x.type === 'auto_renewal' ? 'renewal' : 'top-up'}</span>
+      ${money(x.amount)} <span class="pgap">+${x.daysAfter}d</span>`).join('<br>');
+    const r = p.reply
+      ? `<span class="chip ${CHIP[p.reply.s][0]}"><i></i>${CHIP[p.reply.s][1]}</span>
+         <span class="why">${p.reply.at} · ${WHO[p.reply.who][1].toLowerCase()}<br>“${esc(p.reply.text.slice(0, 70))}”</span>`
+      : '<span class="none">never replied</span>';
+    const prior = p.priorPayments
+      ? `${p.priorPayments} payment${p.priorPayments === 1 ? '' : 's'}<span class="why">last ${p.priorLast}</span>`
+      : '<span class="none">none</span>';
+    return `<tr${p.internal ? ' class="is-auto"' : ''}>
+      <td><strong>${esc(p.name.slice(0, 38))}</strong><span class="why">${p.short} · <span class="chip ${cls}"><i></i>${lab}</span></span></td>
+      <td>${CAMP[p.campaign] || p.campaign}</td>
+      <td class="mono">${p.firstEmail || '—'}</td><td class="mono">${p.firstWa || '—'}</td>
+      <td>${r}</td><td class="paycell">${pays}</td>
+      <td class="r">${money(p.total)}</td><td>${prior}</td></tr>`;
+  }).join('');
+  return `<div class="sec-head"><h2 class="sec">Who actually paid</h2>
+    <p>Not the boards' checkboxes — the receipts. A payment is a row in
+      <code>payments2.credit_gain</code> with <code>status = 'paid'</code> and a non-zero amount;
+      free credit grants (<code>type = 'bonus'</code>) are excluded, because they are exactly how a
+      row reads as "paid" while no money moved. A <strong>top-up</strong> is someone deliberately
+      buying credits; a <strong>renewal</strong> is a subscription charging. Every payment is dated
+      against that team's first email and its first WhatsApp separately.</p>
+    <p>The last column is what makes the rest honest: a renewal landing days after we wrote to a
+      team that was <em>already</em> paying every month is the subscription continuing, not
+      something the outreach produced.</p></div>
+  <section class="matrix"><div class="claims">
+    <div class="claim"><span class="eyebrow">Receipts, all time</span>
+      <div class="v num">${ext.length}</div>
+      <p>teams paid after contact — <span class="num">${money(d.totals.revenue)}</span> from
+        ${d.totals.payments} payments, with our own team excluded.</p></div>
+    <div class="claim"><span class="eyebrow">First-ever payment</span>
+      <div class="v num">${by('first-ever').length}<span class="unit"> · ${money(sum(by('first-ever')))}</span></div>
+      <p>Teams that had never paid us anything before we wrote to them.</p></div>
+    <div class="claim warnish"><span class="eyebrow">Already active — not a win</span>
+      <div class="v num">${by('already-active').length}<span class="unit"> · ${money(sum(by('already-active')))}</span></div>
+      <p>Paid us within the 60 days before contact too. Their next charge is the subscription
+        continuing, and counting it as recovery is how a board overstates itself.</p></div>
+  </div></section>
+  <section class="panel">
+    <div class="panel-head"><h2>Every paying team, and how we reached them</h2>
+      <p>${d.payers.length} teams · ${d.payers.reduce((a, p) => a + p.payments.length, 0)} payments · sorted by amount. Dates UTC.</p></div>
+    <div class="tbl-wrap"><table class="payers">
+      <thead><tr><th>Team</th><th>Campaign</th><th>1st email</th><th>1st WhatsApp</th>
+        <th>Their reply</th><th>Payments</th><th class="r">Total</th><th>Paid before?</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <p class="note"><span class="num">${by('returned').length}</span> teams came back after a real
+      dormant gap (<span class="num">${money(sum(by('returned')))}</span>) — those are the genuine
+      win-backs. <span class="num">${by('already-active').length}</span> were already paying.</p>
+  </section>`;
+}
+
+function matrix(d) {
+  const c = d.campaigns.churn.sentiment, o = d.campaigns.onboarding.sentiment;
+  const T = (s, k) => c[s][k] + o[s][k];
+  const order = ['positive', 'negative', 'neutral', 'unreviewed', 'auto'];
+  const rows = order.filter((s) => T(s, 'total')).map((s) => `<tr${s === 'auto' ? ' class="is-auto"' : ''}>
+    <td><span class="chip ${CHIP[s][0]}"><i></i>${CHIP[s][1]}</span></td>
+    <td class="r num">${T(s, 'total')}</td>
+    <td class="r num${s === 'positive' && T(s, 'human') ? ' cell-hi' : (s === 'negative' && !T(s, 'human') ? ' cell-miss' : '')}">${T(s, 'human')}</td>
+    <td class="r num">${T(s, 'ai')}</td><td class="r num${T(s, 'none') ? '' : ' cell-zero'}">${T(s, 'none')}</td></tr>`).join('');
+  const tot = (k) => order.reduce((a, s) => a + T(s, k), 0);
+  return `<div class="sec-head"><h2 class="sec">What came back — and who answered it</h2>
+    <p>Neither board stores sentiment, so every thread is classified here. "Auto-responder" is the
+      customer's own away-message bot firing at us — a reply the system counts and a person never
+      sent. <strong>Answered by a human</strong> means a real teammate wrote in that chat
+      afterwards; the AI support assistant does not count, because it answers almost everything
+      within seconds and closes the session.${d.totals.unreviewedReplies ? `
+      <strong>${d.totals.unreviewedReplies} new repl${d.totals.unreviewedReplies === 1 ? 'y is' : 'ies are'}
+      not yet classified</strong> — they are marked "Unreviewed" until someone reads them.` : ''}</p></div>
+  <section class="matrix"><div class="tbl-wrap"><table>
+    <thead><tr><th>Reply type</th><th class="r">Replies</th><th class="r">Human answered</th>
+      <th class="r">AI bot only</th><th class="r">Nobody answered</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td>All replies</td><td class="r num">${tot('total')}</td><td class="r num">${tot('human')}</td>
+      <td class="r num">${tot('ai')}</td><td class="r num">${tot('none')}</td></tr></tfoot>
+  </table></div></section>`;
+}
+
+function ledger(d) {
+  const real = d.replies.filter((r) => r.s !== 'auto');
+  const un = real.filter((r) => r.who !== 'human');
+  const btn = (f, label) => `<button class="fbtn" data-f="${f}" aria-pressed="${FILTER === f}">${label}</button>`;
+  return `<div class="sec-head"><h2 class="sec">The ${d.replies.length} replies</h2>
+    <p>Numbers are masked for sharing; <strong>Open chat</strong> goes straight to that conversation
+      in the Inbox. Response time runs from the customer's first message to the first human reply.</p></div>
+  <section class="panel">
+    <div class="filters" role="group" aria-label="Filter replies">
+      ${btn('all', 'All ' + d.replies.length)}${btn('real', `Real people (${real.length})`)}
+      ${btn('unanswered', `Real &amp; no human reply (${un.length})`)}
+      ${btn('positive', 'Positive')}${btn('negative', 'Negative')}${btn('neutral', 'Neutral')}
+      ${d.totals.unreviewedReplies ? btn('unreviewed', `Unreviewed (${d.totals.unreviewedReplies})`) : ''}
+      ${btn('auto', 'Auto-responders')}
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Type</th><th>Number</th><th>Flow</th><th>First reply</th><th>What they said</th>
+        <th>We answered</th><th class="r">Response</th><th>Chat</th></tr></thead>
+      <tbody id="ledger-body"></tbody></table></div>
+    <p class="note" id="ledger-count"></p>
+  </section>`;
+}
+
+function renderLedger() {
+  const d = DATA;
+  const rows = d.replies.filter((r) =>
+    FILTER === 'all' ? true : FILTER === 'real' ? r.s !== 'auto'
+    : FILTER === 'unanswered' ? (r.s !== 'auto' && r.who !== 'human') : r.s === FILTER);
+  $('#ledger-body').innerHTML = rows.map((r) => `<tr class="${r.s === 'auto' ? 'is-auto' : ''}">
+    <td><span class="chip ${CHIP[r.s][0]}"><i></i>${CHIP[r.s][1]}</span>${r.review ? ' <span class="review">review</span>' : ''}</td>
+    <td class="mono">${esc(r.masked)}<span class="why">${r.campaign}</span></td>
+    <td>${esc(r.flow)}</td>
+    <td class="mono">${esc(r.at)}<span class="why">${r.n} msg${r.n > 1 ? 's' : ''}</span></td>
+    <td class="quote">“${esc(r.text)}”</td>
+    <td><span class="who ${WHO[r.who][0]}">${WHO[r.who][1]}</span><span class="why">${esc(r.why || '')}</span></td>
+    <td class="r">${r.mins == null ? '—' : (r.mins >= 60 ? (r.mins / 60).toFixed(1) + ' h' : r.mins + ' min')}</td>
+    <td><a class="chat-link" href="${r.url}" target="_blank" rel="noopener noreferrer">Open chat &#8599;</a></td>
+  </tr>`).join('');
+  $('#ledger-count').textContent = `Showing ${rows.length} of ${d.replies.length} replies. `
+    + 'A dash means no human ever answered, or a teammate was already in the thread. '
+    + 'Chat links need you signed in to the same team.';
+  document.querySelectorAll('.fbtn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === FILTER)));
+}
+
+function render(d) {
+  DATA = d;
+  $('#root').innerHTML = `<div class="wrap">${masthead(d)}${chain(d)}
+    <div class="sec-head"><h2 class="sec">What went out, per campaign</h2>
+      <p>Both campaigns run the same two channels: a Postmark broadcast stream and WhatsApp message
+        flows fired one recipient at a time. WhatsApp outcomes come from Meta, not from our own
+        "we sent it" stamp.</p></div>
+    <div class="grid2">
+      ${campaignPanel(d, 'churn', 'Churn win-back', `P0–P4 lists · ${d.campaigns.churn.flows.length} message flows · since ${pretty(d.campaigns.churn.wa.from)}`)}
+      ${campaignPanel(d, 'onboarding', 'Onboarding activation', `Signup funnel · ${d.campaigns.onboarding.flows.length} message flows${d.wave1 ? ' · two waves since ' + pretty(d.wave1.from) : ''}`)}
+    </div>
+    ${payers(d)}${matrix(d)}${ledger(d)}
+    <p class="note">Rebuilt automatically from Lark, Postmark, the ChatDaddy flow records and inbox,
+      and the production billing database. Inbound direction is detected on
+      <code>senderContactId === chatId</code>, since the messages endpoint omits <code>fromMe</code>
+      on inbound rather than setting it false; flow records are paged with <code>&amp;cursor=</code>,
+      which is not the name the API returns them under.</p>
+  </div>`;
+  document.querySelectorAll('.fbtn').forEach((b) => b.addEventListener('click', () => {
+    FILTER = b.dataset.f; renderLedger();
+  }));
+  renderLedger();
+}
+
+/**
+ * Two hosts, two shapes. On Vercel a function checks the key and hands back the
+ * report; on GitHub Pages there is no server, so the page fetches ciphertext
+ * that anyone may download and decrypts it here — the key never leaves the
+ * browser either way.
+ */
+async function load(key) {
+  // Ask the host we are actually on. Probing the other one first works, but
+  // leaves a 404 in every visitor's console on whichever host we guessed wrong.
+  const staticHost = location.hostname.endsWith('github.io') || location.protocol === 'file:';
+  if (!staticHost) {
+    const api = await fetch('/api/data', { headers: { 'x-ol-key': key } }).catch(() => null);
+    if (api && api.status === 401) throw new Error('That key was not accepted.');
+    if (api && api.ok) return api.json();
+  }
+
+  const r = await fetch('data.enc.json', { cache: 'no-store' });
+  if (!r.ok) throw new Error('Could not load the report (HTTP ' + r.status + ').');
+  const blob = await r.json();
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode(key), 'PBKDF2', false, ['deriveKey']);
+  const dk = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: b64(blob.salt), iterations: blob.iter, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  let plain;
+  try {
+    plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(blob.iv) }, dk, b64(blob.data));
+  } catch {
+    // GCM fails closed: a wrong key and a tampered file are the same error here.
+    throw new Error('That key was not accepted.');
+  }
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+async function attempt(key, fromUrl) {
+  try {
+    const d = await load(key);
+    try { localStorage.setItem('ol-key', key); } catch { /* private window */ }
+    render(d);
+  } catch (e) {
+    if (fromUrl) return false;
+    $('#err').hidden = false; $('#err').textContent = e.message;
+    return false;
+  }
+  return true;
+}
+
+(async () => {
+  const url = new URLSearchParams(location.search).get('key');
+  let saved = null; try { saved = localStorage.getItem('ol-key'); } catch { /* ignore */ }
+  const first = url || saved;
+  if (first && await attempt(first, true)) return;
+  $('#go').addEventListener('click', async () => {
+    $('#go').textContent = 'Decrypting…'; $('#go').disabled = true;
+    const ok = await attempt($('#key').value.trim(), false);
+    if (!ok) { $('#go').textContent = 'Open the report'; $('#go').disabled = false; }
+  });
+  $('#key').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#go').click(); });
+})();
+</script>
+</body>
+</html>
