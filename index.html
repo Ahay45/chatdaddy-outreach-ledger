@@ -200,6 +200,10 @@ tfoot td{border-top:1px solid var(--rule-strong); border-bottom:0;
 .none{color:var(--ink-3); font-style:italic}
 .payers .chip{font-size:10.5px; padding:1px 7px 1px 6px}
 .payers .why{display:block; margin-top:3px; max-width:30ch}
+/* the reply column collapses to a word per line once the date columns carry two
+   lines each; the table already scrolls, so give it a floor instead */
+.payers td:nth-child(5), .payers th:nth-child(5){min-width:230px}
+.payers td:nth-child(1), .payers th:nth-child(1){min-width:190px}
 
 /* ── ledger ── */
 .filters{display:flex; gap:7px; flex-wrap:wrap; align-items:center}
@@ -395,6 +399,13 @@ function campaignPanel(d, k, title, blurb) {
   </section>`;
 }
 
+/** One send shows as a date; a run of them shows as the window it covered. */
+function span(first, last) {
+  if (!first) return '—';
+  if (!last || last === first) return first;
+  return `${first}<span class="why">last ${last}</span>`;
+}
+
 function payers(d) {
   const ext = d.payers.filter((p) => !p.internal);
   const by = (s) => ext.filter((p) => p.status === s);
@@ -414,12 +425,15 @@ function payers(d) {
     const prior = p.priorPayments
       ? `${p.priorPayments} payment${p.priorPayments === 1 ? '' : 's'}<span class="why">last ${p.priorLast}</span>`
       : '<span class="none">none</span>';
+    const chased = p.messagedAfterPaying && !p.internal
+      ? ` <span class="review" title="We were still messaging this team after their payment landed">still messaged ${p.messagedAfterPaying}</span>` : '';
     return `<tr${p.internal ? ' class="is-auto"' : ''}>
       <td><strong>${esc(p.name.slice(0, 38))}</strong><span class="why">${p.short} · <span class="chip ${cls}"><i></i>${lab}</span></span></td>
       <td>${CAMP[p.campaign] || p.campaign}</td>
-      <td class="mono">${p.firstEmail || '—'}</td><td class="mono">${p.firstWa || '—'}</td>
+      <td class="mono">${span(p.firstEmail, p.lastEmail)}</td>
+      <td class="mono">${span(p.firstWa, p.lastWa)}</td>
       <td>${r}</td><td class="paycell">${pays}</td>
-      <td class="r">${money(p.total)}</td><td>${prior}</td></tr>`;
+      <td class="r">${money(p.total)}${chased}</td><td>${prior}</td></tr>`;
   }).join('');
   return `<div class="sec-head"><h2 class="sec">Who actually paid</h2>
     <p>Not the boards' checkboxes — the receipts. A payment is a row in
@@ -427,10 +441,14 @@ function payers(d) {
       free credit grants (<code>type = 'bonus'</code>) are excluded, because they are exactly how a
       row reads as "paid" while no money moved. A <strong>top-up</strong> is someone deliberately
       buying credits; a <strong>renewal</strong> is a subscription charging. Every payment is dated
-      against that team's first email and its first WhatsApp separately.</p>
+      against that team's first email and its first WhatsApp separately, and each channel shows the
+      <strong>whole window</strong> — first send, and the last one — so a payment can be read
+      against how long we were actually in front of them rather than one date.</p>
     <p>The last column is what makes the rest honest: a renewal landing days after we wrote to a
       team that was <em>already</em> paying every month is the subscription continuing, not
-      something the outreach produced.</p></div>
+      something the outreach produced. A <span class="review">still messaged</span> flag means the
+      campaign carried on writing to them <em>after</em> their payment cleared — the flows are not
+      reading the billing state back.</p></div>
   <section class="matrix"><div class="claims">
     <div class="claim"><span class="eyebrow">Receipts, all time</span>
       <div class="v num">${ext.length}</div>
@@ -448,7 +466,7 @@ function payers(d) {
     <div class="panel-head"><h2>Every paying team, and how we reached them</h2>
       <p>${d.payers.length} teams · ${d.payers.reduce((a, p) => a + p.payments.length, 0)} payments · sorted by amount. Dates UTC.</p></div>
     <div class="tbl-wrap"><table class="payers">
-      <thead><tr><th>Team</th><th>Campaign</th><th>1st email</th><th>1st WhatsApp</th>
+      <thead><tr><th>Team</th><th>Campaign</th><th>Email sent</th><th>WhatsApp sent</th>
         <th>Their reply</th><th>Payments</th><th class="r">Total</th><th>Paid before?</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
     <p class="note"><span class="num">${by('returned').length}</span> teams came back after a real
