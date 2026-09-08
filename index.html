@@ -455,7 +455,9 @@ function payers(d) {
       and the slowest genuine one here is +6 days. Charges past the cut-off are shown against the
       team but not added up${d.totals.lapsedPayments ? `: <strong>${d.totals.lapsedPayments}
       payment${d.totals.lapsedPayments === 1 ? '' : 's'} worth ${money(d.totals.lapsedRevenue)}</strong>
-      sit outside the window and are excluded` : ''}.</p>
+      sit outside the window and are excluded` : ''}. Two narrower readings sit beside it: a payment
+      from a team that signed up and paid the same day is not a conversion the outreach produced,
+      and an "open" logged within a minute of the send is a mail client, not a reader.</p>
     <p>The last column is what makes the rest honest: a renewal landing days after we wrote to a
       team that was <em>already</em> paying every month is the subscription continuing, not
       something the outreach produced. A <span class="review">still messaged</span> flag means the
@@ -466,7 +468,16 @@ function payers(d) {
       <div class="v num">${ext.length}</div>
       <p>teams paid while the program was running or within ${d.totals.graceDays} days of its last
         message — <span class="num">${money(d.totals.revenue)}</span> from
-        ${d.totals.payments} payments, with our own team excluded.</p></div>
+        ${d.totals.payments} payments, with our own team excluded.${d.totals.sameDaySignupPayers ? `
+        <strong>${money(d.totals.sameDaySignupRevenue)}</strong> of that came from
+        ${d.totals.sameDaySignupPayers} team${d.totals.sameDaySignupPayers === 1 ? '' : 's'} that
+        registered, was written to and paid on the same day — shown here, but held out of the
+        ${money(d.totals.attributedRevenue)} we actually attribute.` : ''}</p></div>
+    <div class="claim"><span class="eyebrow">What survives questioning</span>
+      <div class="v num">${d.totals.engagedPayers}<span class="unit"> · ${money(d.totals.engagedRevenue)}</span></div>
+      <p>Payers who actually <em>did</em> something — replied, clicked, or opened for real. An open
+        logged seconds after the send is a mail client fetching the tracking pixel, not a person,
+        and no longer counts as engagement.</p></div>
     <div class="claim"><span class="eyebrow">First-ever payment</span>
       <div class="v num">${by('first-ever').length}<span class="unit"> · ${money(sum(by('first-ever')))}</span></div>
       <p>Teams that had never paid us anything before we wrote to them.</p></div>
